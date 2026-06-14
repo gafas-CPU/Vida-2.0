@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>VIDA 2.0</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+:root{
+  --bg:#08091a;--bg2:#10122a;--bg3:#1a1d3d;
+  --purple:#a855f7;--cyan:#22d3ee;--gold:#fbbf24;--green:#34d399;--pink:#f472b6;--red:#ef4444;
+  --text:#e8e9ff;--muted:#7878a8;--border:rgba(124,58,237,0.25);
+  --radius:14px;--radius-sm:10px;
+}
+body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,sans-serif;min-height:100dvh;display:flex;justify-content:center;overflow-x:hidden;}
+#app{width:100%;max-width:420px;min-height:100dvh;display:flex;flex-direction:column;position:relative;overflow:hidden;}
+.screen{flex:1;overflow-y:auto;overflow-x:hidden;padding-bottom:80px;-webkit-overflow-scrolling:touch;}
+.screen::-webkit-scrollbar{display:none;}
+.statusbar{display:flex;justify-content:space-between;align-items:center;padding:10px 16px 6px;flex-shrink:0;}
+.statusbar .logo{font-size:13px;font-weight:900;letter-spacing:2px;background:linear-gradient(90deg,var(--purple),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.statusbar .time{font-size:11px;color:var(--muted);}
+.hamburger{background:transparent;border:none;color:var(--muted);font-size:18px;cursor:pointer;padding:4px 8px;}
+.bnav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:420px;background:rgba(8,9,26,0.97);border-top:1px solid var(--border);display:flex;justify-content:space-around;padding:8px 8px 14px;z-index:99;}
+.bnav-btn{display:flex;flex-direction:column;align-items:center;gap:2px;border:none;background:transparent;cursor:pointer;padding:6px 10px;border-radius:10px;color:var(--muted);font-size:10px;min-width:52px;transition:all .2s;position:relative;}
+.bnav-btn.active{color:var(--purple);}
+.bnav-btn.active::before{content:'';position:absolute;top:-8px;left:50%;transform:translateX(-50%);width:28px;height:3px;border-radius:99px;background:linear-gradient(90deg,var(--purple),var(--cyan));box-shadow:0 0 8px var(--purple);}
+.bnav-btn .icon{font-size:20px;}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:10px;}
+.card-glow-purple{border-color:rgba(168,85,247,0.4);box-shadow:0 0 20px rgba(168,85,247,0.08);}
+.card-glow-cyan{border-color:rgba(34,211,238,0.4);box-shadow:0 0 20px rgba(34,211,238,0.08);}
+.card-gold{background:linear-gradient(135deg,rgba(251,191,36,.12),rgba(245,158,11,.04));border-color:rgba(251,191,36,.4);}
+.card-green{background:linear-gradient(135deg,rgba(52,211,153,.1),rgba(16,185,129,.04));border-color:rgba(52,211,153,.3);}
+.card-purple{background:linear-gradient(135deg,rgba(168,85,247,.1),rgba(124,58,237,.04));border-color:rgba(168,85,247,.3);}
+.xpbar{background:var(--bg3);border-radius:99px;height:8px;overflow:hidden;}
+.xpbar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--purple),var(--cyan));box-shadow:0 0 8px rgba(168,85,247,.5);transition:width .6s ease;}
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:3px 8px;border-radius:99px;font-weight:600;}
+.badge-purple{background:rgba(168,85,247,.2);color:var(--purple);}
+.badge-cyan{background:rgba(34,211,238,.2);color:var(--cyan);}
+.badge-gold{background:rgba(251,191,36,.2);color:var(--gold);}
+.badge-green{background:rgba(52,211,153,.2);color:var(--green);}
+.badge-red{background:rgba(239,68,68,.2);color:var(--red);}
+.badge-gray{background:rgba(255,255,255,.08);color:var(--muted);}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 18px;border-radius:var(--radius-sm);border:none;cursor:pointer;font-size:14px;font-weight:600;transition:all .2s;}
+.btn-primary{background:linear-gradient(135deg,var(--purple),#7c3aed);color:#fff;box-shadow:0 4px 16px rgba(124,58,237,.3);}
+.btn-primary:active{transform:scale(.97);}
+.btn-secondary{background:var(--bg3);border:1px solid var(--border);color:var(--text);}
+.btn-full{width:100%;}
+.btn-sm{padding:7px 14px;font-size:13px;}
+.btn-danger{background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);color:var(--red);}
+.btn:disabled{opacity:.5;cursor:not-allowed;}
+.input{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);padding:11px 14px;font-size:14px;outline:none;transition:border-color .2s;}
+.input:focus{border-color:var(--purple);}
+.input-label{font-size:12px;color:var(--muted);margin-bottom:5px;display:block;}
+.input-error{font-size:11px;color:var(--red);margin-top:4px;}
+.flex{display:flex;}.gap-2{gap:8px;}.gap-3{gap:12px;}
+.items-center{align-items:center;}.justify-between{justify-content:space-between;}.flex-col{flex-direction:column;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+.text-center{text-align:center;}
+.mt-2{margin-top:8px;}.mt-3{margin-top:12px;}.mt-4{margin-top:16px;}
+.mb-2{margin-bottom:8px;}.mb-3{margin-bottom:12px;}
+.px-4{padding-left:16px;padding-right:16px;}
+.text-sm{font-size:13px;}.text-xs{font-size:11px;}
+.color-purple{color:var(--purple);}.color-cyan{color:var(--cyan);}.color-gold{color:var(--gold);}.color-green{color:var(--green);}.color-muted{color:var(--muted);}.color-red{color:var(--red);}
+.avatar{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--purple),var(--cyan));display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;flex-shrink:0;}
+.avatar-border{padding:2px;background:linear-gradient(135deg,var(--purple),var(--cyan));border-radius:50%;}
+.avatar-inner{background:var(--bg);border-radius:50%;padding:2px;}
+.mission-item{display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg3);border-radius:var(--radius-sm);margin-bottom:8px;border:1px solid transparent;transition:border-color .2s;cursor:pointer;}
+.mission-item.done{border-color:rgba(52,211,153,.25);}
+.mission-check{width:22px;height:22px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s;}
+.mission-check.checked{background:var(--green);border-color:var(--green);}
+.streak-day{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;}
+.streak-day.on{background:var(--gold);color:#000;}
+.streak-day.off{background:var(--bg3);color:var(--muted);}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}.pulse{animation:pulse 2s infinite;}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}.float{animation:float 3s ease-in-out infinite;}
+@keyframes fadein{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}.fadein{animation:fadein .35s ease-out;}
+@keyframes spin{to{transform:rotate(360deg)}}.spinning{animation:spin 1s linear infinite;}
+.chat-bubble{max-width:82%;padding:10px 14px;border-radius:18px;font-size:14px;line-height:1.5;margin-bottom:8px;}
+.chat-bubble.user{background:linear-gradient(135deg,var(--purple),#7c3aed);color:#fff;border-bottom-right-radius:4px;margin-left:auto;}
+.chat-bubble.aria{background:var(--bg2);border:1px solid var(--border);border-bottom-left-radius:4px;}
+.onboard-bg{background:radial-gradient(ellipse at top,rgba(124,58,237,.2) 0%,transparent 60%),var(--bg);min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;}
+#toast{position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-80px);background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:10px 20px;font-size:14px;z-index:999;transition:transform .3s ease;white-space:nowrap;max-width:350px;text-align:center;}
+#toast.show{transform:translateX(-50%) translateY(0);}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;display:flex;align-items:flex-end;justify-content:center;}
+.modal-sheet{background:var(--bg2);border-radius:20px 20px 0 0;border-top:1px solid var(--border);padding:20px;width:100%;max-width:420px;max-height:85dvh;overflow-y:auto;}
+.modal-sheet::-webkit-scrollbar{display:none;}
+.modal-handle{width:36px;height:4px;background:var(--bg3);border-radius:99px;margin:0 auto 20px;}
+.tabs{display:flex;gap:4px;background:var(--bg3);padding:4px;border-radius:var(--radius-sm);margin-bottom:14px;}
+.tab-btn{flex:1;padding:7px;border:none;border-radius:8px;background:transparent;color:var(--muted);font-size:12px;cursor:pointer;font-weight:600;transition:all .2s;}
+.tab-btn.active{background:var(--purple);color:#fff;}
+.stat-mini{background:var(--bg3);border-radius:var(--radius-sm);padding:12px;text-align:center;}
+.stat-mini .val{font-size:22px;font-weight:800;}
+.stat-mini .lbl{font-size:10px;color:var(--muted);margin-top:2px;}
+.ach-card{background:var(--bg3);border-radius:var(--radius-sm);padding:12px;display:flex;align-items:center;gap:12px;margin-bottom:8px;border:1px solid transparent;}
+.ach-card.unlocked{border-color:rgba(168,85,247,.3);}
+.ach-card.locked{opacity:.5;}
+.ach-icon{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
+.ach-icon.common{background:rgba(168,85,247,.15);}
+.ach-icon.rare{background:rgba(34,211,238,.15);}
+.ach-icon.legendary{background:linear-gradient(135deg,rgba(251,191,36,.2),rgba(245,158,11,.1));border:1px solid rgba(251,191,36,.3);}
+.ach-icon.secret{background:rgba(244,114,182,.15);}
+.friend-card{display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg3);border-radius:var(--radius-sm);margin-bottom:8px;}
+.shop-item{background:var(--bg3);border-radius:var(--radius);padding:14px;display:flex;flex-direction:column;align-items:center;gap:8px;border:1px solid var(--border);text-align:center;cursor:pointer;transition:all .2s;}
+.shop-item.owned{border-color:rgba(52,211,153,.4);}
+.future-card{border-radius:var(--radius);padding:16px;margin-bottom:10px;}
+.future-year-1{background:linear-gradient(135deg,rgba(34,211,238,.1),rgba(34,211,238,.02));border:1px solid rgba(34,211,238,.3);}
+.future-year-5{background:linear-gradient(135deg,rgba(168,85,247,.1),rgba(168,85,247,.02));border:1px solid rgba(168,85,247,.3);}
+.future-year-10{background:linear-gradient(135deg,rgba(251,191,36,.1),rgba(251,191,36,.02));border:1px solid rgba(251,191,36,.3);}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
+.cal-day{aspect-ratio:1;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;cursor:pointer;}
+.cal-day.completed{background:rgba(52,211,153,.25);color:var(--green);}
+.cal-day.partial{background:rgba(251,191,36,.2);color:var(--gold);}
+.cal-day.today-cal{border:2px solid var(--purple);color:var(--purple);}
+.cal-day.empty{color:var(--muted);}
+.cal-day.other-month{opacity:.3;}
+.section-h{font-size:16px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;}
+.see-all{font-size:12px;color:var(--purple);cursor:pointer;font-weight:500;}
+.rank-item{display:flex;align-items:center;gap:12px;padding:10px 12px;background:var(--bg3);border-radius:var(--radius-sm);margin-bottom:6px;}
+.rank-num{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0;}
+.rank-1{background:linear-gradient(135deg,var(--gold),#f59e0b);color:#000;}
+.rank-2{background:linear-gradient(135deg,#94a3b8,#64748b);color:#fff;}
+.rank-3{background:linear-gradient(135deg,#cd7c32,#92400e);color:#fff;}
+.rank-other{background:var(--bg2);color:var(--muted);}
+
+/* Loading screen */
+.loading-screen{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;}
+.loading-logo{font-size:64px;margin-bottom:16px;}
+.loading-text{font-size:13px;color:var(--muted);}
+.loader{width:40px;height:40px;border:3px solid var(--bg3);border-top-color:var(--purple);border-radius:50%;margin:16px auto;}
+
+/* Auth error box */
+.auth-error{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:var(--radius-sm);padding:10px 14px;font-size:13px;color:var(--red);margin-bottom:12px;display:none;}
+.auth-error.show{display:block;}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="statusbar">
+    <span class="time" id="clock"></span>
+    <span class="logo">VIDA 2.0</span>
+    <button class="hamburger" onclick="toggleMenu()">☰</button>
+  </div>
+  <div id="dropmenu" style="display:none;position:absolute;top:46px;right:12px;z-index:150;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:8px;min-width:160px;box-shadow:0 8px 32px rgba(0,0,0,.5);">
+    <button onclick="goTo('logros');toggleMenu()" style="width:100%;padding:10px 12px;display:flex;align-items:center;gap:10px;background:transparent;border:none;border-radius:8px;color:var(--text);cursor:pointer;font-size:14px;">🏆 Logros</button>
+    <button onclick="goTo('amigos');toggleMenu()" style="width:100%;padding:10px 12px;display:flex;align-items:center;gap:10px;background:transparent;border:none;border-radius:8px;color:var(--text);cursor:pointer;font-size:14px;">👥 Amigos</button>
+    <button onclick="goTo('futuro');toggleMenu()" style="width:100%;padding:10px 12px;display:flex;align-items:center;gap:10px;background:transparent;border:none;border-radius:8px;color:var(--text);cursor:pointer;font-size:14px;">🔮 Futuro</button>
+    <button onclick="goTo('calendario');toggleMenu()" style="width:100%;padding:10px 12px;display:flex;align-items:center;gap:10px;background:transparent;border:none;border-radius:8px;color:var(--text);cursor:pointer;font-size:14px;">📅 Calendario</button>
+    <button onclick="goTo('tienda');toggleMenu()" style="width:100%;padding:10px 12px;display:flex;align-items:center;gap:10px;background:transparent;border:none;border-radius:8px;color:var(--text);cursor:pointer;font-size:14px;">🛒 Tienda</button>
+    <button onclick="goTo('estadisticas');toggleMenu()" style="width:100%;padding:10px 12px;display:flex;align-items:center;gap:10px;background:transparent;border:none;border-radius:8px;color:var(--text);cursor:pointer;font-size:14px;">📊 Estadísticas</button>
+    <button onclick="goTo('ajustes');toggleMenu()" style="width:100%;padding:10px 12px;display:flex;align-items:center;gap:10px;background:transparent;border:none;border-radius:8px;color:var(--text);cursor:pointer;font-size:14px;">⚙️ Ajustes</button>
+    <div style="border-top:1px solid var(--border);margin:6px 0;"></div>
+    <button onclick="doLogout()" style="width:100%;padding:10px 12px;display:flex;align-items:center;gap:10px;background:transparent;border:none;border-radius:8px;color:var(--red);cursor:pointer;font-size:14px;">🚪 Cerrar sesión</button>
+  </div>
+  <div class="screen" id="mainscreen"></div>
+  <nav class="bnav" style="display:none;">
+    <button class="bnav-btn" id="nav-inicio" onclick="goTo('inicio')"><span class="icon">⚡</span>Inicio</button>
+    <button class="bnav-btn" id="nav-misiones" onclick="goTo('misiones')"><span class="icon">⚔️</span>Misiones</button>
+    <button class="bnav-btn" id="nav-metas" onclick="goTo('metas')"><span class="icon">🎯</span>Metas</button>
+    <button class="bnav-btn" id="nav-aria" onclick="goTo('aria')"><span class="icon">🤖</span>ARIA</button>
+    <button class="bnav-btn" id="nav-perfil" onclick="goTo('perfil')"><span class="icon">👤</span>Perfil</button>
+  </nav>
+</div>
+<div id="toast"></div>
+<div id="modal" style="display:none;" class="modal-overlay" onclick="closeModal(event)"></div>
+
+<script>
+// ===================== SUPABASE INIT =====================
+const SUPABASE_URL = 'https://ffdrvjfypsbvueoufcza.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_AdmJTmbBs8hybVxtgr7o5A_DC_jDg43';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ===================== STATE =====================
+let currentUser = null;   // Supabase auth user
+let userProfile = null;   // profile row from DB
+
+// Local data (synced to DB)
+let STATE = {
+  missions: [
+    {id:'m1',title:'Meditar 10 minutos',icon:'🧘',xp:50,category:'Bienestar',time:'10:00'},
+    {id:'m2',title:'Ejercicio 30 min',icon:'💪',xp:100,category:'Fitness',time:'07:30'},
+    {id:'m3',title:'Leer 20 páginas',icon:'📚',xp:75,category:'Mente',time:'21:00'},
+    {id:'m4',title:'Sin redes 2 horas',icon:'📵',xp:80,category:'Digital',time:'15:00'},
+    {id:'m5',title:'Beber 2L agua',icon:'💧',xp:40,category:'Salud',time:'Todo el día'},
+    {id:'m6',title:'Planificar mañana',icon:'📋',xp:60,category:'Productividad',time:'22:00'},
+  ],
+  goals: [],
+  checkedMissions: new Set(),
+  chatMessages: [],
+  isTyping: false,
+  amigosTab:'ranking', futuroTab:'1año', statsTab:'semana', shopTab:'todo',
+  shopItems:[
+    {id:0,title:'Marco Neon',icon:'🟣',type:'Marco',price:500,owned:true},
+    {id:1,title:'Avatar Dragón',icon:'🐉',type:'Avatar',price:1000,owned:false},
+    {id:2,title:'Marco Dorado',icon:'🟡',type:'Marco',price:800,owned:false},
+    {id:3,title:'Título "Leyenda"',icon:'👑',type:'Título',price:2000,owned:false},
+    {id:4,title:'Avatar Galaxia',icon:'🌌',type:'Avatar',price:1500,owned:false},
+    {id:5,title:'Premium (mes)',icon:'⭐',type:'Premium',price:0,owned:false,realPrice:'4.99€/mes'},
+    {id:6,title:'Pack XP x2',icon:'⚡',type:'Boost',price:300,owned:false},
+  ],
+  achievements:[
+    {id:0,title:'Primera misión',icon:'🌟',desc:'Completa tu primera misión',type:'common',unlocked:false,xp:100},
+    {id:1,title:'Racha de fuego',icon:'🔥',desc:'5 días seguidos',type:'common',unlocked:false,xp:200},
+    {id:2,title:'Guerrero digital',icon:'⚔️',desc:'50 misiones completadas',type:'rare',unlocked:false,xp:500},
+    {id:3,title:'Maestro de hábitos',icon:'🏆',desc:'30 días de racha',type:'legendary',unlocked:false,xp:2000},
+    {id:4,title:'???',icon:'🔒',desc:'Logro secreto',type:'secret',unlocked:false,xp:1000},
+  ],
+  weekDays:['L','M','X','J','V','S','D'],
+};
+
+let currentScreen = 'loading';
+
+// ===================== UTILS =====================
+function showToast(msg, color='var(--purple)'){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.borderColor = color;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2800);
+}
+function toggleMenu(){
+  const m = document.getElementById('dropmenu');
+  m.style.display = m.style.display==='none'?'block':'none';
+}
+function goTo(screen){
+  currentScreen = screen;
+  document.getElementById('dropmenu').style.display='none';
+  render();
+  document.querySelectorAll('.bnav-btn').forEach(b=>b.classList.remove('active'));
+  const nb = document.getElementById('nav-'+screen);
+  if(nb) nb.classList.add('active');
+  const ms = document.getElementById('mainscreen');
+  if(ms) ms.scrollTop=0;
+}
+function openModal(html){
+  const m = document.getElementById('modal');
+  m.innerHTML=`<div class="modal-sheet fadein"><div class="modal-handle"></div>${html}</div>`;
+  m.style.display='flex';
+}
+function closeModal(e){if(e&&e.target.id!=='modal')return;document.getElementById('modal').style.display='none';}
+function closeModalDirect(){document.getElementById('modal').style.display='none';}
+function showTerms(){openModal('<h3 style="font-size:17px;font-weight:700;margin-bottom:12px;">Términos y Condiciones</h3><p style="font-size:13px;color:var(--muted);line-height:1.7;">Al usar VIDA 2.0 aceptas el procesamiento seguro de tus datos personales. La versión gratuita incluye funciones básicas. Premium: 4.99€/mes o 39.99€/año, cancelable en cualquier momento. Datos protegidos bajo GDPR.</p><button class="btn btn-primary btn-full mt-4" onclick="closeModalDirect()">Entendido</button>');}
+function showPrivacy(){openModal('<h3 style="font-size:17px;font-weight:700;margin-bottom:12px;">Política de Privacidad</h3><p style="font-size:13px;color:var(--muted);line-height:1.7;">VIDA 2.0 usa Supabase para almacenar tus datos con cifrado AES-256. No vendemos ni compartimos tu información. Puedes solicitar la eliminación completa de tu cuenta y datos desde Ajustes. Cumplimos GDPR y CCPA.</p><button class="btn btn-primary btn-full mt-4" onclick="closeModalDirect()">Entendido</button>');}
+function updateClock(){const el=document.getElementById('clock');if(el)el.textContent=new Date().toLocaleTimeString('es',{hour:'2-digit',minute:'2-digit'});}
+
+// ===================== SUPABASE AUTH =====================
+async function initAuth(){
+  render(); // show loading
+  const { data:{ session } } = await sb.auth.getSession();
+  if(session){
+    currentUser = session.user;
+    await loadProfile();
+    goTo('inicio');
+  } else {
+    goTo('login');
+  }
+  sb.auth.onAuthStateChange(async (event, session)=>{
+    if(event==='SIGNED_IN' && session){
+      currentUser = session.user;
+      await loadProfile();
+      goTo('inicio');
+    } else if(event==='SIGNED_OUT'){
+      currentUser = null;
+      userProfile = null;
+      STATE.goals = [];
+      STATE.checkedMissions = new Set();
+      goTo('login');
+    }
+  });
+}
+
+async function loadProfile(){
+  // Try to get existing profile
+  const { data, error } = await sb.from('profiles').select('*').eq('id', currentUser.id).single();
+  if(error || !data){
+    // Create new profile
+    const username = currentUser.email.split('@')[0];
+    const newProfile = {
+      id: currentUser.id,
+      email: currentUser.email,
+      username: username,
+      avatar: '⚡',
+      level: 1,
+      xp: 0,
+      xp_max: 1000,
+      streak: 0,
+      coins: 100,
+      total_xp: 0,
+      premium: false,
+      title: 'Novato',
+      missions_completed: 0,
+      created_at: new Date().toISOString(),
+    };
+    await sb.from('profiles').upsert(newProfile);
+    userProfile = newProfile;
+  } else {
+    userProfile = data;
+  }
+  // Load goals
+  const { data: goals } = await sb.from('goals').select('*').eq('user_id', currentUser.id);
+  STATE.goals = goals || [];
+  // Load today's checked missions
+  const today = new Date().toISOString().split('T')[0];
+  const { data: mDone } = await sb.from('mission_logs').select('mission_id').eq('user_id', currentUser.id).eq('date', today);
+  STATE.checkedMissions = new Set((mDone||[]).map(m=>m.mission_id));
+  // Init ARIA chat
+  STATE.chatMessages = [{role:'aria', text:`¡Hola ${userProfile.username}! 👋 Soy ARIA, tu asistente IA. He cargado tu perfil. ¿En qué te ayudo hoy?`, time: new Date().toLocaleTimeString('es',{hour:'2-digit',minute:'2-digit'})}];
+}
+
+async function doRegister(){
+  const email = document.getElementById('regEmail')?.value?.trim();
+  const pass = document.getElementById('regPass')?.value;
+  const pass2 = document.getElementById('regPass2')?.value;
+  const username = document.getElementById('regName')?.value?.trim();
+  const errEl = document.getElementById('regError');
+
+  errEl.classList.remove('show');
+
+  if(!username || !email || !pass || !pass2){errEl.textContent='Rellena todos los campos';errEl.classList.add('show');return;}
+  if(pass.length < 6){errEl.textContent='La contraseña debe tener al menos 6 caracteres';errEl.classList.add('show');return;}
+  if(pass !== pass2){errEl.textContent='Las contraseñas no coinciden';errEl.classList.add('show');return;}
+
+  const btn = document.getElementById('regBtn');
+  btn.disabled = true;
+  btn.textContent = 'Creando cuenta...';
+
+  const { data, error } = await sb.auth.signUp({ email, password: pass, options:{ data:{ username } } });
+
+  if(error){
+    errEl.textContent = error.message === 'User already registered' ? 'Este email ya está registrado' : error.message;
+    errEl.classList.add('show');
+    btn.disabled = false;
+    btn.textContent = 'Crear cuenta gratis';
+    return;
+  }
+
+  showToast('✅ ¡Cuenta creada! Revisa tu email para verificar.','var(--green)');
+  btn.disabled = false;
+  btn.textContent = 'Crear cuenta gratis';
+  goTo('login');
+}
+
+async function doLogin(){
+  const email = document.getElementById('loginEmail')?.value?.trim();
+  const pass = document.getElementById('loginPass')?.value;
+  const errEl = document.getElementById('loginError');
+  errEl.classList.remove('show');
+
+  if(!email || !pass){errEl.textContent='Introduce email y contraseña';errEl.classList.add('show');return;}
+
+  const btn = document.getElementById('loginBtn');
+  btn.disabled = true;
+  btn.textContent = 'Entrando...';
+
+  const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
+
+  if(error){
+    errEl.textContent = error.message.includes('Invalid') ? 'Email o contraseña incorrectos' : error.message;
+    errEl.classList.add('show');
+    btn.disabled = false;
+    btn.textContent = 'Iniciar sesión';
+    return;
+  }
+  // onAuthStateChange handles the rest
+}
+
+async function doRecover(){
+  const email = document.getElementById('recoverEmail')?.value?.trim();
+  if(!email){showToast('Introduce tu email','var(--red)');return;}
+  const { error } = await sb.auth.resetPasswordForEmail(email);
+  if(error){showToast('Error: '+error.message,'var(--red)');}
+  else{showToast('📧 Email de recuperación enviado','var(--cyan)');closeModalDirect();}
+}
+
+async function doLogout(){
+  await sb.auth.signOut();
+  toggleMenu();
+}
+
+// ===================== DB SYNC =====================
+async function gainXP(amount){
+  if(!userProfile) return;
+  userProfile.xp += amount;
+  userProfile.total_xp += amount;
+  userProfile.coins += Math.floor(amount/10);
+  let leveled = false;
+  while(userProfile.xp >= userProfile.xp_max){
+    userProfile.xp -= userProfile.xp_max;
+    userProfile.level++;
+    userProfile.xp_max = Math.floor(userProfile.xp_max * 1.15);
+    leveled = true;
+    if(userProfile.level === 5) userProfile.title = 'Aprendiz';
+    if(userProfile.level === 10) userProfile.title = 'Explorador';
+    if(userProfile.level === 25) userProfile.title = 'Guerrero';
+    if(userProfile.level === 50) userProfile.title = 'Leyenda';
+  }
+  if(leveled) showToast(`🎉 ¡NIVEL ${userProfile.level}! ¡SUBISTE!`,'var(--gold)');
+  else showToast(`+${amount} XP ⚡`,'var(--purple)');
+  // Save to Supabase
+  await sb.from('profiles').update({
+    xp: userProfile.xp,
+    xp_max: userProfile.xp_max,
+    level: userProfile.level,
+    total_xp: userProfile.total_xp,
+    coins: userProfile.coins,
+    title: userProfile.title,
+  }).eq('id', currentUser.id);
+}
+
+async function toggleMission(missionId){
+  const today = new Date().toISOString().split('T')[0];
+  if(STATE.checkedMissions.has(missionId)){
+    STATE.checkedMissions.delete(missionId);
+    await sb.from('mission_logs').delete().eq('user_id', currentUser.id).eq('mission_id', missionId).eq('date', today);
+  } else {
+    STATE.checkedMissions.add(missionId);
+    const mission = STATE.missions.find(m=>m.id===missionId);
+    await sb.from('mission_logs').upsert({user_id: currentUser.id, mission_id: missionId, date: today, xp_earned: mission?.xp||50});
+    await gainXP(mission?.xp||50);
+    // Update missions_completed count
+    userProfile.missions_completed = (userProfile.missions_completed||0)+1;
+    await sb.from('profiles').update({missions_completed: userProfile.missions_completed}).eq('id', currentUser.id);
+    checkAchievements();
+  }
+  render();
+}
+
+async function addGoal(title, target, unit, category){
+  const icons = {Fitness:'🏋️',Mente:'📚',Finanzas:'💰',Bienestar:'🧘',Social:'👥',Personal:'🎯'};
+  const newGoal = {user_id: currentUser.id, title, icon: icons[category]||'🎯', progress:0, target: parseInt(target)||100, unit, xp:200, category};
+  const { data, error } = await sb.from('goals').insert(newGoal).select().single();
+  if(!error && data){ STATE.goals.push(data); showToast('✅ Meta creada','var(--green)'); render(); }
+  else showToast('Error creando meta','var(--red)');
+}
+
+async function updateGoalProgress(goalId, newVal){
+  const g = STATE.goals.find(g=>g.id===goalId);
+  if(!g) return;
+  g.progress = Math.min(parseInt(newVal)||0, g.target);
+  await sb.from('goals').update({progress: g.progress}).eq('id', goalId);
+  if(g.progress >= g.target){
+    await gainXP(g.xp);
+    showToast('🎉 ¡Meta completada! +'+g.xp+' XP','var(--gold)');
+  }
+  render();
+}
+
+async function deleteGoal(goalId){
+  await sb.from('goals').delete().eq('id', goalId);
+  STATE.goals = STATE.goals.filter(g=>g.id!==goalId);
+  showToast('Meta eliminada','var(--muted)');
+  closeModalDirect();
+  render();
+}
+
+function checkAchievements(){
+  const mc = userProfile?.missions_completed||0;
+  if(mc>=1 && !STATE.achievements[0].unlocked){ STATE.achievements[0].unlocked=true; showToast('🌟 Logro: Primera misión','var(--gold)'); }
+  if(mc>=50 && !STATE.achievements[2].unlocked){ STATE.achievements[2].unlocked=true; showToast('⚔️ Logro: Guerrero digital','var(--gold)'); }
+  if((userProfile?.streak||0)>=5 && !STATE.achievements[1].unlocked){ STATE.achievements[1].unlocked=true; showToast('🔥 Logro: Racha de fuego','var(--gold)'); }
+}
+
+// ===================== SCREENS =====================
+
+function renderLoading(){
+  return `<div class="loading-screen"><div class="loading-logo float">⚡</div>
+    <div style="font-size:22px;font-weight:800;background:linear-gradient(90deg,var(--purple),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px;">VIDA 2.0</div>
+    <div class="loader spinning"></div>
+    <div class="loading-text">Cargando tu perfil...</div></div>`;
+}
+
+function renderLogin(){
+  return `<div style="padding:24px;min-height:90dvh;display:flex;flex-direction:column;justify-content:center;">
+    <div class="text-center" style="margin-bottom:32px;">
+      <div style="font-size:52px;margin-bottom:10px;" class="float">⚡</div>
+      <h1 style="font-size:26px;font-weight:800;background:linear-gradient(90deg,var(--purple),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;">VIDA 2.0</h1>
+      <p style="color:var(--muted);font-size:14px;margin-top:4px;">Convierte tu vida en un videojuego</p>
+    </div>
+    <div class="auth-error" id="loginError"></div>
+    <div style="margin-bottom:14px;"><label class="input-label">Email</label><input class="input" type="email" placeholder="tu@email.com" id="loginEmail" autocomplete="email"/></div>
+    <div style="margin-bottom:8px;"><label class="input-label">Contraseña</label><input class="input" type="password" placeholder="••••••••" id="loginPass" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"/></div>
+    <div style="text-align:right;margin-bottom:20px;"><span onclick="showRecoverModal()" style="font-size:12px;color:var(--cyan);cursor:pointer;">¿Olvidaste tu contraseña?</span></div>
+    <button class="btn btn-primary btn-full" id="loginBtn" style="margin-bottom:12px;" onclick="doLogin()">Iniciar sesión</button>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;"><div style="flex:1;height:1px;background:var(--border);"></div><span style="font-size:12px;color:var(--muted);">o</span><div style="flex:1;height:1px;background:var(--border);"></div></div>
+    <p style="text-align:center;font-size:13px;color:var(--muted);">¿No tienes cuenta? <span onclick="goTo('registro')" style="color:var(--purple);cursor:pointer;font-weight:700;">Regístrate gratis</span></p>
+  </div>`;
+}
+
+function showRecoverModal(){
+  openModal(`<h3 style="font-size:17px;font-weight:700;margin-bottom:16px;">🔑 Recuperar contraseña</h3>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:14px;">Te enviaremos un email para restablecer tu contraseña.</p>
+    <div style="margin-bottom:16px;"><label class="input-label">Email</label><input class="input" type="email" placeholder="tu@email.com" id="recoverEmail"/></div>
+    <button class="btn btn-primary btn-full" onclick="doRecover()">Enviar email</button>`);
+}
+
+function renderRegistro(){
+  return `<div style="padding:24px;">
+    <div class="flex items-center gap-3" style="margin-bottom:24px;">
+      <button onclick="goTo('login')" style="background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:22px;">←</button>
+      <h2 style="font-size:20px;font-weight:800;">Crear cuenta</h2>
+    </div>
+    <div class="auth-error" id="regError"></div>
+    <div style="margin-bottom:12px;"><label class="input-label">Nombre de usuario</label><input class="input" placeholder="Tu nombre" id="regName" autocomplete="username"/></div>
+    <div style="margin-bottom:12px;"><label class="input-label">Email</label><input class="input" type="email" placeholder="tu@email.com" id="regEmail" autocomplete="email"/></div>
+    <div style="margin-bottom:12px;"><label class="input-label">Contraseña</label><input class="input" type="password" placeholder="Mínimo 6 caracteres" id="regPass" autocomplete="new-password"/></div>
+    <div style="margin-bottom:20px;"><label class="input-label">Confirmar contraseña</label><input class="input" type="password" placeholder="Repite la contraseña" id="regPass2" autocomplete="new-password" onkeydown="if(event.key==='Enter')doRegister()"/></div>
+    <button class="btn btn-primary btn-full" id="regBtn" style="margin-bottom:14px;" onclick="doRegister()">Crear cuenta gratis</button>
+    <p style="font-size:11px;color:var(--muted);text-align:center;line-height:1.6;">Al registrarte aceptas nuestros <span style="color:var(--purple);cursor:pointer;" onclick="showTerms()">Términos</span> y <span style="color:var(--purple);cursor:pointer;" onclick="showPrivacy()">Política de Privacidad</span></p>
+  </div>`;
+}
+
+function renderInicio(){
+  const u = userProfile||{};
+  const xpPct = Math.round(((u.xp||0)/(u.xp_max||1000))*100);
+  const done = STATE.checkedMissions.size;
+  const total = STATE.missions.length;
+  return `<div class="px-4 fadein" style="padding-top:8px;">
+    <div class="flex items-center justify-between" style="margin-bottom:14px;">
+      <div><p style="font-size:11px;color:var(--muted);">Buenos días,</p><h1 style="font-size:20px;font-weight:800;color:var(--purple);">${u.username||'Usuario'} ${u.avatar||'⚡'}</h1></div>
+      <div class="avatar-border"><div class="avatar-inner"><div class="avatar">${u.level||1}</div></div></div>
+    </div>
+    <div class="card card-glow-purple" style="margin-bottom:10px;">
+      <div class="flex justify-between items-center mb-2">
+        <span class="color-gold" style="font-size:13px;">⚡ ${(u.xp||0).toLocaleString()} XP</span>
+        <span class="badge badge-purple">Nivel ${u.level||1} → ${(u.level||1)+1}</span>
+      </div>
+      <div class="xpbar"><div class="xpbar-fill" style="width:${xpPct}%"></div></div>
+      <p style="font-size:11px;color:var(--muted);margin-top:4px;">${((u.xp_max||1000)-(u.xp||0)).toLocaleString()} XP para subir · ${xpPct}%</p>
+    </div>
+    <div class="card card-gold" style="margin-bottom:10px;">
+      <div class="flex justify-between items-center">
+        <div class="flex items-center gap-3"><span style="font-size:36px;" class="float">🔥</span>
+          <div><div class="color-gold" style="font-size:28px;font-weight:800;line-height:1;">${u.streak||0}</div><div style="font-size:11px;color:var(--muted);">días seguidos</div></div>
+        </div>
+        <div style="text-align:right;"><div style="font-size:12px;color:var(--gold);font-weight:600;">Bonus a los 7 días</div><div style="font-size:11px;color:var(--muted);">→ +500 XP</div></div>
+      </div>
+    </div>
+    <div class="grid3" style="margin-bottom:10px;">
+      <div class="stat-mini"><div class="val color-purple">${done}/${total}</div><div class="lbl">Misiones</div></div>
+      <div class="stat-mini"><div class="val color-cyan">${STATE.goals.length}</div><div class="lbl">Metas</div></div>
+      <div class="stat-mini"><div class="val color-gold">💰${u.coins||0}</div><div class="lbl">Monedas</div></div>
+    </div>
+    <div class="section-h"><span>Misiones de hoy</span><span class="see-all" onclick="goTo('misiones')">Ver todas →</span></div>
+    ${STATE.missions.slice(0,4).map(m=>{
+      const d = STATE.checkedMissions.has(m.id);
+      return `<div class="mission-item ${d?'done':''}" onclick="toggleMission('${m.id}')">
+        <div class="mission-check ${d?'checked':''}"><span style="font-size:12px;color:#fff;">${d?'✓':''}</span></div>
+        <span style="font-size:20px;">${m.icon}</span>
+        <div style="flex:1;"><div style="font-size:14px;font-weight:600;${d?'text-decoration:line-through;color:var(--muted)':''}">${m.title}</div><div style="font-size:11px;color:var(--muted);">${m.time}</div></div>
+        <span class="badge badge-purple">+${m.xp}</span></div>`;
+    }).join('')}
+    <div class="section-h mt-2"><span>Metas activas</span><span class="see-all" onclick="goTo('metas')">Ver todas →</span></div>
+    ${STATE.goals.length===0
+      ? `<div class="card text-center" style="padding:20px;"><p style="color:var(--muted);font-size:14px;">Aún no tienes metas 🎯</p><button class="btn btn-primary btn-sm mt-3" onclick="goTo('metas')">Crear primera meta</button></div>`
+      : STATE.goals.slice(0,2).map(g=>{const pct=Math.round((g.progress/g.target)*100);return`<div class="card" style="padding:12px;margin-bottom:8px;"><div class="flex items-center gap-3 mb-2"><span style="font-size:22px;">${g.icon}</span><div style="flex:1;"><div style="font-size:14px;font-weight:600;">${g.title}</div><div style="font-size:11px;color:var(--muted);">${g.progress}/${g.target} ${g.unit}</div></div><span class="badge badge-cyan">${pct}%</span></div><div class="xpbar" style="height:6px;"><div class="xpbar-fill" style="width:${pct}%;background:linear-gradient(90deg,var(--cyan),var(--green));"></div></div></div>`;}).join('')}
+    <div class="card card-glow-cyan" style="margin-bottom:20px;cursor:pointer;" onclick="goTo('aria')">
+      <div class="flex items-center gap-3">
+        <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--cyan),var(--purple));display:flex;align-items:center;justify-content:center;font-size:18px;" class="pulse">🤖</div>
+        <div style="flex:1;"><div style="font-size:13px;font-weight:700;color:var(--cyan);">ARIA dice:</div><div style="font-size:13px;">"Habla conmigo para analizar tus hábitos y crear tu plan 🔥"</div></div>
+        <span style="color:var(--muted);">→</span>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderMisiones(){
+  const done = STATE.checkedMissions.size;
+  const total = STATE.missions.length;
+  const pct = Math.round((done/total)*100);
+  return `<div class="px-4 fadein" style="padding-top:8px;">
+    <div class="section-h"><span>⚔️ Misiones del día</span><span class="badge badge-purple">${done}/${total}</span></div>
+    <div class="card card-glow-purple" style="margin-bottom:14px;">
+      <div class="flex justify-between items-center mb-2"><span style="font-size:13px;font-weight:600;">Progreso de hoy</span><span class="color-purple">${pct}%</span></div>
+      <div class="xpbar"><div class="xpbar-fill" style="width:${pct}%"></div></div>
+      <div class="flex justify-between mt-2"><span style="font-size:11px;color:var(--muted);">XP ganado: <span class="color-gold">${[...STATE.checkedMissions].reduce((a,id)=>a+(STATE.missions.find(m=>m.id===id)?.xp||0),0)} XP</span></span><span style="font-size:11px;color:var(--muted);">${total-done} restantes</span></div>
+    </div>
+    ${STATE.missions.map(m=>{
+      const d = STATE.checkedMissions.has(m.id);
+      return `<div class="mission-item ${d?'done':''}" onclick="toggleMission('${m.id}')">
+        <div class="mission-check ${d?'checked':''}"><span style="font-size:12px;color:#fff;">${d?'✓':''}</span></div>
+        <span style="font-size:22px;">${m.icon}</span>
+        <div style="flex:1;"><div style="font-size:14px;font-weight:600;${d?'text-decoration:line-through;color:var(--muted)':''}">${m.title}</div><div style="font-size:11px;color:var(--muted);">🕐 ${m.time} · ${m.category}</div></div>
+        <span class="badge ${d?'badge-green':'badge-purple'}">+${m.xp} XP</span></div>`;
+    }).join('')}
+    <button class="btn btn-secondary btn-full mt-3" onclick="addMisionModal()">+ Añadir misión</button>
+    <div class="card card-gold mt-3"><div class="flex items-center gap-3"><span style="font-size:28px;">🔥</span><div style="flex:1;"><div style="font-size:14px;font-weight:700;color:var(--gold);">Reto: 7 días perfectos</div><div style="font-size:12px;color:var(--muted);">100% misiones 7 días seguidos → +1500 XP</div></div></div></div>
+  </div>`;
+}
+
+function addMisionModal(){
+  openModal(`<h3 style="font-size:17px;font-weight:700;margin-bottom:16px;">➕ Nueva misión</h3>
+    <div style="margin-bottom:12px;"><label class="input-label">Título</label><input class="input" placeholder="Ej: Correr 5km" id="nMT"/></div>
+    <div class="grid2" style="margin-bottom:12px;"><div><label class="input-label">XP</label><input class="input" type="number" value="50" id="nMX"/></div><div><label class="input-label">Hora</label><input class="input" type="time" id="nMH" value="08:00"/></div></div>
+    <button class="btn btn-primary btn-full" onclick="confAddM()">Crear misión</button>`);
+}
+function confAddM(){
+  const t=document.getElementById('nMT')?.value||'Nueva misión';
+  const xp=parseInt(document.getElementById('nMX')?.value||'50');
+  const time=document.getElementById('nMH')?.value||'08:00';
+  const id='custom_'+Date.now();
+  STATE.missions.push({id,title:t,icon:'⭐',xp,category:'Personal',time});
+  closeModalDirect();showToast('✅ Misión añadida','var(--green)');render();
+}
+
+function renderMetas(){
+  return `<div class="px-4 fadein" style="padding-top:8px;">
+    <div class="section-h"><span>🎯 Mis Metas</span><button class="btn btn-sm btn-primary" onclick="addMetaModal()">+ Nueva</button></div>
+    ${STATE.goals.length===0
+      ? `<div class="card text-center" style="padding:30px;"><div style="font-size:48px;margin-bottom:12px;">🎯</div><p style="color:var(--muted);font-size:14px;margin-bottom:16px;">Aún no tienes metas.<br>¡Crea tu primera ahora!</p><button class="btn btn-primary" onclick="addMetaModal()">Crear meta</button></div>`
+      : STATE.goals.map(g=>{
+          const pct=Math.round((g.progress/g.target)*100);
+          return `<div class="card card-glow-purple" style="margin-bottom:10px;">
+            <div class="flex items-center gap-3 mb-3">
+              <span style="font-size:28px;">${g.icon}</span>
+              <div style="flex:1;"><div style="font-size:15px;font-weight:700;">${g.title}</div><span class="badge badge-gray">${g.category}</span></div>
+              <span class="badge ${pct>=100?'badge-green':'badge-purple'}">${pct}%</span>
+            </div>
+            <div class="flex justify-between mb-1"><span style="font-size:11px;color:var(--muted);">Progreso</span><span style="font-size:11px;color:var(--muted);"><span style="color:var(--text);font-weight:600;">${g.progress}</span> / ${g.target} ${g.unit}</span></div>
+            <div class="xpbar mb-2"><div class="xpbar-fill" style="width:${pct}%;background:linear-gradient(90deg,${pct>=100?'var(--green),#10b981':'var(--purple),var(--cyan)'});"></div></div>
+            <div class="flex justify-between items-center">
+              <span class="badge badge-gold">+${g.xp} XP</span>
+              <div class="flex gap-2">
+                <button class="btn btn-sm btn-secondary" onclick="updateGoalModal('${g.id}')">Actualizar</button>
+                <button class="btn btn-sm btn-danger" onclick="deleteGoalConfirm('${g.id}')">🗑️</button>
+              </div>
+            </div>
+          </div>`;
+        }).join('')}
+  </div>`;
+}
+
+function addMetaModal(){
+  openModal(`<h3 style="font-size:17px;font-weight:700;margin-bottom:16px;">🎯 Nueva Meta</h3>
+    <div style="margin-bottom:12px;"><label class="input-label">Título</label><input class="input" placeholder="Ej: Correr 5km" id="nGT"/></div>
+    <div class="grid2" style="margin-bottom:12px;">
+      <div><label class="input-label">Cantidad objetivo</label><input class="input" type="number" value="100" id="nGV"/></div>
+      <div><label class="input-label">Unidad</label><input class="input" value="%" id="nGU"/></div>
+    </div>
+    <div style="margin-bottom:16px;"><label class="input-label">Categoría</label>
+      <select class="input" id="nGC"><option>Fitness</option><option>Mente</option><option>Finanzas</option><option>Bienestar</option><option>Social</option><option>Personal</option></select>
+    </div>
+    <button class="btn btn-primary btn-full" onclick="confAddMeta()">Crear meta</button>`);
+}
+function confAddMeta(){
+  const t=document.getElementById('nGT')?.value;
+  if(!t){showToast('Escribe un título','var(--red)');return;}
+  addGoal(t,document.getElementById('nGV')?.value,document.getElementById('nGU')?.value,document.getElementById('nGC')?.value);
+  closeModalDirect();
+}
+function updateGoalModal(id){
+  const g=STATE.goals.find(g=>g.id==id);
+  if(!g)return;
+  openModal(`<h3 style="font-size:17px;font-weight:700;margin-bottom:16px;">${g.icon} Actualizar progreso</h3>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:12px;">Actual: ${g.progress} / ${g.target} ${g.unit}</p>
+    <div style="margin-bottom:16px;"><label class="input-label">Nuevo valor</label><input class="input" type="number" value="${g.progress}" id="uV" min="0" max="${g.target}"/></div>
+    <button class="btn btn-primary btn-full" onclick="updateGoalProgress('${id}',document.getElementById('uV').value);closeModalDirect()">Guardar</button>`);
+}
+function deleteGoalConfirm(id){
+  openModal(`<h3 style="font-size:17px;font-weight:700;margin-bottom:12px;">🗑️ Eliminar meta</h3>
+    <p style="font-size:14px;color:var(--muted);margin-bottom:16px;">¿Seguro que quieres eliminar esta meta? Esta acción no se puede deshacer.</p>
+    <button class="btn btn-danger btn-full mb-2" onclick="deleteGoal('${id}')">Eliminar</button>
+    <button class="btn btn-secondary btn-full" onclick="closeModalDirect()">Cancelar</button>`);
+}
+
+function renderARIA(){
+  return `<div style="display:flex;flex-direction:column;height:calc(100dvh - 130px);" class="fadein">
+    <div style="padding:12px 16px;background:linear-gradient(135deg,rgba(6,182,212,.08),rgba(124,58,237,.08));border-bottom:1px solid var(--border);flex-shrink:0;">
+      <div class="flex items-center gap-3">
+        <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--cyan),var(--purple));display:flex;align-items:center;justify-content:center;font-size:20px;" class="pulse">🤖</div>
+        <div>
+          <div style="font-size:16px;font-weight:800;color:var(--cyan);">ARIA</div>
+          <div class="flex items-center gap-2"><div style="width:7px;height:7px;border-radius:50%;background:var(--green);" class="pulse"></div><span style="font-size:11px;color:var(--green);">IA Activa</span></div>
+        </div>
+        <button class="btn btn-sm btn-secondary" style="margin-left:auto;" onclick="clearChat()">Limpiar</button>
+      </div>
+      <div class="grid3 mt-2">
+        <div style="background:rgba(255,255,255,.05);border-radius:8px;padding:8px;text-align:center;"><div style="font-size:16px;font-weight:700;color:var(--cyan);">Nv.${userProfile?.level||1}</div><div style="font-size:10px;color:var(--muted);">Nivel</div></div>
+        <div style="background:rgba(255,255,255,.05);border-radius:8px;padding:8px;text-align:center;"><div style="font-size:16px;font-weight:700;color:var(--gold);">${STATE.checkedMissions.size}/${STATE.missions.length}</div><div style="font-size:10px;color:var(--muted);">Hoy</div></div>
+        <div style="background:rgba(255,255,255,.05);border-radius:8px;padding:8px;text-align:center;"><div style="font-size:16px;font-weight:700;color:var(--green);">🔥${userProfile?.streak||0}</div><div style="font-size:10px;color:var(--muted);">Racha</div></div>
+      </div>
+    </div>
+    <div id="chatMessages" style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;">
+      ${STATE.chatMessages.map(m=>renderChatMsg(m)).join('')}
+      ${STATE.isTyping?`<div style="display:flex;gap:4px;align-items:center;padding:10px 14px;background:var(--bg2);border:1px solid var(--border);border-radius:18px;border-bottom-left-radius:4px;width:80px;">
+        <div style="width:8px;height:8px;border-radius:50%;background:var(--cyan);" class="pulse"></div>
+        <div style="width:8px;height:8px;border-radius:50%;background:var(--cyan);animation-delay:.2s;" class="pulse"></div>
+        <div style="width:8px;height:8px;border-radius:50%;background:var(--cyan);animation-delay:.4s;" class="pulse"></div></div>`:''}
+    </div>
+    <div style="padding:8px 16px;display:flex;gap:6px;overflow-x:auto;flex-shrink:0;">
+      ${['¿Cómo voy?','Crea un plan','Dame motivación','Analiza mis hábitos','¿Qué mejorar?'].map(s=>`<button onclick="sendARIA('${s}')" style="flex-shrink:0;background:rgba(34,211,238,.1);border:1px solid rgba(34,211,238,.3);border-radius:99px;padding:6px 12px;color:var(--cyan);font-size:12px;cursor:pointer;white-space:nowrap;">${s}</button>`).join('')}
+    </div>
+    <div class="flex gap-2 items-center" style="padding:8px 16px 12px;border-top:1px solid var(--border);flex-shrink:0;">
+      <input id="ariaInput" class="input" placeholder="Pregúntale a ARIA..." onkeydown="if(event.key==='Enter')sendARIA()" style="flex:1;"/>
+      <button onclick="sendARIA()" style="width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,var(--cyan),var(--purple));border:none;color:#fff;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;">→</button>
+    </div>
+  </div>`;
+}
+function renderChatMsg(m){return`<div class="flex flex-col ${m.role==='user'?'items-end':'items-start'}" style="margin-bottom:8px;"><div class="chat-bubble ${m.role}">${m.text.replace(/\n/g,'<br>').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')}</div><span style="font-size:10px;color:var(--muted);margin-top:2px;">${m.time}</span></div>`;}
+function clearChat(){STATE.chatMessages=[{role:'aria',text:`¡Chat reiniciado! ¿En qué te ayudo, ${userProfile?.username||''}? 🤖`,time:new Date().toLocaleTimeString('es',{hour:'2-digit',minute:'2-digit'})}];render();}
+async function sendARIA(text){
+  const input=document.getElementById('ariaInput');
+  const msg=text||(input?input.value:'');
+  if(!msg.trim())return;
+  if(input)input.value='';
+  const now=new Date().toLocaleTimeString('es',{hour:'2-digit',minute:'2-digit'});
+  STATE.chatMessages.push({role:'user',text:msg,time:now});
+  STATE.isTyping=true;render();scrollChat();
+  const u=userProfile||{};
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+      model:'claude-sonnet-4-6',max_tokens:1000,
+      system:`Eres ARIA, asistente IA personal de VIDA 2.0 (app de productividad gamificada). Datos del usuario: nombre=${u.username}, nivel=${u.level}, XP=${u.xp}/${u.xp_max}, racha=${u.streak} días, misiones hoy=${STATE.checkedMissions.size}/${STATE.missions.length}, metas activas=${STATE.goals.length}, monedas=${u.coins}. Responde en español, usa emojis, sé motivadora y concisa (máx 130 palabras). Personaliza cada respuesta con sus datos reales.`,
+      messages:[{role:'user',content:msg}]})});
+    const data=await res.json();
+    STATE.isTyping=false;
+    STATE.chatMessages.push({role:'aria',text:data.content?.[0]?.text||'¡Sigue adelante! ⚡',time:new Date().toLocaleTimeString('es',{hour:'2-digit',minute:'2-digit'})});
+  }catch(e){
+    STATE.isTyping=false;
+    const fallbacks={'¿Cómo voy?':`📊 Llevas ${u.streak||0} días de racha y ${STATE.checkedMissions.size}/${STATE.missions.length} misiones hoy. Nivel ${u.level||1} con ${u.xp||0} XP. ¡Buen trabajo!`,'Crea un plan':'🗓️ Plan recomendado: Mañana (misiones físicas), tarde (metas mentales), noche (reflexión + planificación). Consistencia = victoria ⚡','Dame motivación':`🔥 ${u.username}, cada día que te presentas es una victoria. Nivel ${u.level||1} y subiendo. ¡El 90% se rinde, tú no! 💪`,'Analiza mis hábitos':`🔍 Tienes ${STATE.goals.length} metas activas y ${STATE.checkedMissions.size} misiones completadas hoy. Sigue así para mantener tu racha 🔥`};
+    STATE.chatMessages.push({role:'aria',text:fallbacks[msg]||`Entendido, ${u.username}. Estás en el nivel ${u.level||1} con ${u.streak||0} días de racha. ¡Cada misión cuenta! ⚡`,time:new Date().toLocaleTimeString('es',{hour:'2-digit',minute:'2-digit'})});
+  }
+  render();scrollChat();
+}
+function scrollChat(){setTimeout(()=>{const c=document.getElementById('chatMessages');if(c)c.scrollTop=c.scrollHeight;},100);}
+
+function renderPerfil(){
+  const u=userProfile||{};
+  const xpPct=Math.round(((u.xp||0)/(u.xp_max||1000))*100);
+  return `<div class="px-4 fadein" style="padding-top:8px;">
+    <div style="text-align:center;padding:20px 0 16px;">
+      <div style="position:relative;display:inline-block;">
+        <div class="avatar-border" style="width:80px;height:80px;margin:0 auto;"><div class="avatar-inner"><div class="avatar" style="width:72px;height:72px;font-size:30px;">${u.avatar||'⚡'}</div></div></div>
+        <div style="position:absolute;bottom:-4px;right:-4px;width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--gold),#f59e0b);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#000;">${u.level||1}</div>
+      </div>
+      <h2 style="font-size:22px;font-weight:800;margin-top:12px;">${u.username||'Usuario'}</h2>
+      <p style="font-size:12px;color:var(--muted);margin-top:2px;">${u.email||''}</p>
+      <span class="badge badge-gold" style="margin-top:6px;">👑 ${u.title||'Novato'}</span>
+    </div>
+    <div class="card mb-2">
+      <div class="flex justify-between mb-1"><span style="font-size:11px;color:var(--muted);">Nivel ${u.level||1} → ${(u.level||1)+1}</span><span class="color-gold" style="font-size:13px;">${(u.xp||0).toLocaleString()} / ${(u.xp_max||1000).toLocaleString()} XP</span></div>
+      <div class="xpbar"><div class="xpbar-fill" style="width:${xpPct}%"></div></div>
+    </div>
+    <div class="grid2 mb-3">
+      <div class="stat-mini"><div class="val color-purple">${(u.total_xp||0).toLocaleString()}</div><div class="lbl">XP Total</div></div>
+      <div class="stat-mini"><div class="val color-gold">🔥 ${u.streak||0}</div><div class="lbl">Racha</div></div>
+      <div class="stat-mini"><div class="val color-green">${u.missions_completed||0}</div><div class="lbl">Misiones totales</div></div>
+      <div class="stat-mini"><div class="val color-cyan">💰 ${u.coins||0}</div><div class="lbl">Monedas</div></div>
+    </div>
+    <div class="section-h"><span>Logros</span><span class="see-all" onclick="goTo('logros')">Ver todos →</span></div>
+    <div class="flex gap-2 mb-3" style="overflow-x:auto;padding-bottom:4px;">
+      ${STATE.achievements.filter(a=>a.unlocked).length===0
+        ? `<p style="font-size:13px;color:var(--muted);">Completa misiones para desbloquear logros 🏆</p>`
+        : STATE.achievements.filter(a=>a.unlocked).map(a=>`<div style="flex-shrink:0;text-align:center;"><div style="width:50px;height:50px;border-radius:12px;background:rgba(168,85,247,.15);border:1px solid rgba(168,85,247,.3);display:flex;align-items:center;justify-content:center;font-size:24px;margin:0 auto 4px;">${a.icon}</div><div style="font-size:9px;color:var(--muted);max-width:52px;">${a.title}</div></div>`).join('')}
+    </div>
+    ${!u.premium?`<div class="card card-gold mb-3"><div class="flex items-center gap-3"><span style="font-size:28px;">⭐</span><div style="flex:1;"><div style="font-size:15px;font-weight:700;color:var(--gold);">VIDA 2.0 Premium</div><div style="font-size:12px;color:var(--muted);">XP x2, ARIA ilimitada y más</div></div><button class="btn btn-sm btn-primary" onclick="showPremiumModal()">Activar</button></div></div>`:''}
+    <div class="section-h"><span>⚙️ Cuenta</span></div>
+    ${[{icon:'👤',label:'Editar perfil',action:"editPerfil()"},{icon:'🔒',label:'Privacidad',action:"showPrivacy()"},{icon:'📋',label:'Términos',action:"showTerms()"},{icon:'🗑️',label:'Eliminar cuenta',action:"deleteAccountConfirm()",danger:true}].map(item=>`<button onclick="${item.action}" style="width:100%;padding:13px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);color:${item.danger?'var(--red)':'var(--text)'};display:flex;align-items:center;gap:12px;margin-bottom:8px;cursor:pointer;font-size:14px;text-align:left;"><span style="font-size:18px;">${item.icon}</span>${item.label}<span style="margin-left:auto;color:var(--muted);">→</span></button>`).join('')}
+    <button onclick="doLogout()" style="width:100%;padding:13px;background:transparent;border:1px solid rgba(239,68,68,.3);border-radius:var(--radius-sm);color:var(--red);display:flex;align-items:center;gap:12px;margin-bottom:20px;margin-top:4px;cursor:pointer;font-size:14px;">🚪 Cerrar sesión</button>
+  </div>`;
+}
+
+function editPerfil(){
+  openModal(`<h3 style="font-size:17px;font-weight:700;margin-bottom:16px;">👤 Editar perfil</h3>
+    <div style="margin-bottom:12px;"><label class="input-label">Nombre de usuario</label><input class="input" value="${userProfile?.username||''}" id="eName"/></div>
+    <div style="margin-bottom:12px;"><label class="input-label">Avatar</label><div class="grid3" style="gap:8px;">${['⚡','🔥','🌟','🦅','🐉','🌙','🎮','🏆','💫'].map(a=>`<button onclick="selAvatar('${a}')" style="background:${(userProfile?.avatar||'⚡')===a?'rgba(168,85,247,.3)':'var(--bg3)'};border:1px solid ${(userProfile?.avatar||'⚡')===a?'var(--purple)':'var(--border)'};border-radius:8px;padding:10px;font-size:24px;cursor:pointer;">${a}</button>`).join('')}</div></div>
+    <button class="btn btn-primary btn-full" onclick="savePerfil()">Guardar</button>`);
+}
+function selAvatar(a){if(userProfile)userProfile.avatar=a;editPerfil();}
+async function savePerfil(){
+  const n=document.getElementById('eName')?.value?.trim();
+  if(n&&userProfile){
+    userProfile.username=n;
+    await sb.from('profiles').update({username:n,avatar:userProfile.avatar}).eq('id',currentUser.id);
+  }
+  closeModalDirect();showToast('✅ Perfil guardado','var(--green)');render();
+}
+function deleteAccountConfirm(){
+  openModal(`<h3 style="font-size:17px;font-weight:700;margin-bottom:12px;color:var(--red);">🗑️ Eliminar cuenta</h3>
+    <p style="font-size:14px;color:var(--muted);margin-bottom:16px;line-height:1.6;">Se eliminarán permanentemente tu cuenta, perfil, metas y todo tu progreso. No hay vuelta atrás.</p>
+    <button class="btn btn-danger btn-full mb-2" onclick="doDeleteAccount()">Confirmar eliminación</button>
+    <button class="btn btn-secondary btn-full" onclick="closeModalDirect()">Cancelar</button>`);
+}
+async function doDeleteAccount(){
+  await sb.from('goals').delete().eq('user_id',currentUser.id);
+  await sb.from('mission_logs').delete().eq('user_id',currentUser.id);
+  await sb.from('profiles').delete().eq('id',currentUser.id);
+  await sb.auth.admin?.deleteUser(currentUser.id).catch(()=>{});
+  await sb.auth.signOut();
+  closeModalDirect();
+  showToast('Cuenta eliminada','var(--red)');
+}
+function showPremiumModal(){
+  openModal(`<h3 style="font-size:17px;font-weight:700;margin-bottom:6px;color:var(--gold);">⭐ VIDA 2.0 Premium</h3>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:16px;">Desbloquea todo tu potencial</p>
+    ${['XP x2 en todas las misiones','ARIA ilimitada con IA avanzada','Retos exclusivos Premium','Sin anuncios','Estadísticas avanzadas'].map(f=>`<div class="flex items-center gap-2 mb-2"><span style="color:var(--green);">✓</span><span style="font-size:14px;">${f}</span></div>`).join('')}
+    <div style="border-top:1px solid var(--border);padding-top:16px;margin-top:8px;">
+      <button class="btn btn-primary btn-full mb-2" style="background:linear-gradient(135deg,var(--gold),#f59e0b);" onclick="activatePremium()">Mensual — 4.99€/mes</button>
+      <button class="btn btn-primary btn-full mb-2" onclick="activatePremium()">Anual — 39.99€/año <span style="font-size:11px;opacity:.8;">(ahorra 33%)</span></button>
+      <button class="btn btn-secondary btn-full" onclick="closeModalDirect()">Ahora no</button>
+    </div>`);
+}
+async function activatePremium(){
+  if(userProfile){userProfile.premium=true;await sb.from('profiles').update({premium:true}).eq('id',currentUser.id);}
+  closeModalDirect();showToast('⭐ ¡Premium activado!','var(--gold)');render();
+}
+
+function renderLogros(){
+  const unlocked=STATE.achievements.filter(a=>a.unlocked).length;
+  return `<div class="px-4 fadein" style="padding-top:8px;">
+    <div class="section-h"><span>🏆 Logros</span><span class="badge badge-purple">${unlocked}/${STATE.achievements.length}</span></div>
+    <div class="card card-glow-purple mb-3">
+      <div class="flex justify-between mb-1"><span style="font-size:14px;font-weight:600;">Colección</span><span class="color-gold">${Math.round(unlocked/STATE.achievements.length*100)}%</span></div>
+      <div class="xpbar"><div class="xpbar-fill" style="width:${Math.round(unlocked/STATE.achievements.length*100)}%"></div></div>
+    </div>
+    ${STATE.achievements.map(a=>`<div class="ach-card ${a.unlocked?'unlocked':'locked'}">
+      <div class="ach-icon ${a.type}"><span style="font-size:22px;">${a.icon}</span></div>
+      <div style="flex:1;"><div style="font-size:14px;font-weight:700;${!a.unlocked?'filter:blur(3px)':''}">${a.title}</div><div style="font-size:12px;color:var(--muted);">${a.desc}</div><span class="badge badge-gold" style="margin-top:4px;display:inline-flex;">+${a.xp} XP</span></div>
+      ${a.unlocked?'<span style="color:var(--green);font-size:18px;">✓</span>':'<span style="color:var(--muted);font-size:18px;">🔒</span>'}
+    </div>`).join('')}
+  </div>`;
+}
+
+function renderAmigos(){
+  const t=STATE.amigosTab||'ranking';
+  return `<div class="px-4 fadein" style="padding-top:8px;">
+    <div class="section-h"><span>👥 Comunidad</span></div>
+    <div class="tabs">
+      <button class="tab-btn ${t==='ranking'?'active':''}" onclick="STATE.amigosTab='ranking';render()">Ranking</button>
+      <button class="tab-btn ${t==='buscar'?'active':''}" onclick="STATE.amigosTab='buscar';render()">Buscar</button>
+    </div>
+    ${t==='ranking'?`<div style="text-align:center;padding:40px 20px;"><div style="font-size:48px;margin-bottom:12px;">🌍</div><p style="color:var(--muted);font-size:14px;">El ranking global se activa cuando haya más usuarios. ¡Invita a amigos!</p><button class="btn btn-primary mt-3" onclick="showToast('🔗 Enlace copiado: vida2app.io/ref/${userProfile?.username}','var(--cyan)')">Invitar amigos</button></div>`:`<div style="margin-bottom:12px;"><input class="input" placeholder="🔍 Buscar usuario..." id="sF" onkeyup="searchF()"/></div><div id="sR"><p style="font-size:13px;color:var(--muted);padding:12px;">Escribe un nombre para buscar usuarios...</p></div>`}
+  </div>`;
+}
+async function searchF(){
+  const q=document.getElementById('sF')?.value?.trim();
+  const c=document.getElementById('sR');
+  if(!q||!c){if(c)c.innerHTML='<p style="font-size:13px;color:var(--muted);padding:12px;">Escribe un nombre...</p>';return;}
+  const {data}=await sb.from('profiles').select('username,level,streak,avatar').ilike('username','%'+q+'%').neq('id',currentUser.id).limit(10);
+  c.innerHTML=(data&&data.length>0)?data.map(u=>`<div class="friend-card"><div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--purple),var(--cyan));display:flex;align-items:center;justify-content:center;font-size:20px;">${u.avatar||'👤'}</div><div style="flex:1;"><div style="font-size:14px;font-weight:600;">${u.username}</div><div style="font-size:11px;color:var(--muted);">Nivel ${u.level} · 🔥${u.streak} días</div></div><button class="btn btn-sm btn-primary" onclick="showToast('✅ Solicitud enviada a ${u.username}','var(--green)')">Añadir</button></div>`).join(''):'<p style="font-size:13px;color:var(--muted);padding:12px;">No se encontraron usuarios</p>';
+}
+
+function renderFuturo(){
+  const t=STATE.futuroTab||'1año';
+  const u=userProfile||{};
+  const data={'1año':{icon:'🌱',color:'cyan',title:'En 1 año...',items:[`Proyección nivel: ~${(u.level||1)+30} si mantienes el ritmo ⚡`,`XP acumulado estimado: ~${((u.total_xp||0)+50000).toLocaleString()}`,'Racha proyectada: 150+ días si mantienes la consistencia 🔥',`Metas completadas estimadas: ${STATE.goals.length+8}`],tip:'Mantén al menos 4 misiones diarias para maximizar tu progreso'},'5años':{icon:'🌳',color:'purple',title:'En 5 años...',items:[`Podrías alcanzar el Nivel ${(u.level||1)+150}+ 💎`,'Hábitos completamente arraigados en tu rutina','Impacto real en tu bienestar: +65% estimado','Top 5% de usuarios de VIDA 2.0 👑'],tip:'La clave es la consistencia. Un día a la vez.'},'10años':{icon:'🌌',color:'gold',title:'En 10 años...',items:['Transformación personal completa 🏆','Los hábitos de hoy serán tu segunda naturaleza','ROI personal estimado: 10x','Podrías mentorizar a otros usuarios ⭐'],tip:'Los hábitos que construyes hoy son la base de quien serás'}};
+  const d=data[t];
+  return `<div class="px-4 fadein" style="padding-top:8px;">
+    <div class="section-h"><span>🔮 Tu Futuro</span></div>
+    <div class="tabs">
+      <button class="tab-btn ${t==='1año'?'active':''}" onclick="STATE.futuroTab='1año';render()">1 Año</button>
+      <button class="tab-btn ${t==='5años'?'active':''}" onclick="STATE.futuroTab='5años';render()">5 Años</button>
+      <button class="tab-btn ${t==='10años'?'active':''}" onclick="STATE.futuroTab='10años';render()">10 Años</button>
+    </div>
+    <div class="future-card future-year-${t==='1año'?1:t==='5años'?5:10} mb-3">
+      <div class="flex items-center gap-3 mb-3"><span style="font-size:48px;" class="float">${d.icon}</span><div><h2 style="font-size:18px;font-weight:800;">${d.title}</h2><span class="badge badge-${d.color}">Basado en tu progreso real</span></div></div>
+      ${d.items.map(item=>`<div class="flex items-start gap-2 mb-2"><span style="color:var(--green);flex-shrink:0;">✓</span><span style="font-size:14px;line-height:1.5;">${item}</span></div>`).join('')}
+      <div style="margin-top:12px;padding:10px 12px;background:rgba(255,255,255,.05);border-radius:var(--radius-sm);border-left:3px solid var(--${d.color});"><span style="font-size:12px;color:var(--muted);">💡 ${d.tip}</span></div>
+    </div>
+  </div>`;
+}
+
+function renderCalendario(){
+  const now=new Date();const month=now.getMonth();const year=now.getFullYear();const dim=new Date(year,month+1,0).getDate();const fd=new Date(year,month,1).getDay();const today=now.getDate();const mn=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const btns=[];for(let i=0;i<(fd===0?6:fd-1);i++)btns.push(`<div class="cal-day other-month"></div>`);for(let d=1;d<=dim;d++){const cls=d<today&&Math.random()>.3?'completed':d===today?'today-cal':'empty';btns.push(`<div class="cal-day ${cls}">${d}</div>`);}
+  return `<div class="px-4 fadein" style="padding-top:8px;">
+    <div class="section-h"><span>📅 Calendario</span></div>
+    <div class="card mb-3">
+      <div class="flex justify-between items-center mb-3"><span style="font-size:16px;font-weight:700;">${mn[month]} ${year}</span></div>
+      <div class="cal-grid mb-2">${['L','M','X','J','V','S','D'].map(d=>`<div style="text-align:center;font-size:11px;color:var(--muted);padding:4px 0;">${d}</div>`).join('')}${btns.join('')}</div>
+      <div class="flex gap-3" style="justify-content:center;margin-top:8px;"><div class="flex items-center gap-1"><div style="width:10px;height:10px;border-radius:50%;background:rgba(52,211,153,.5);"></div><span style="font-size:11px;color:var(--muted);">Completado</span></div></div>
+    </div>
+    <div class="grid2 mb-3">
+      <div class="stat-mini"><div class="val color-purple">${userProfile?.level||1}</div><div class="lbl">Nivel actual</div></div>
+      <div class="stat-mini"><div class="val color-gold">🔥 ${userProfile?.streak||0}</div><div class="lbl">Racha</div></div>
+      <div class="stat-mini"><div class="val color-green">${userProfile?.missions_completed||0}</div><div class="lbl">Misiones totales</div></div>
+      <div class="stat-mini"><div class="val color-cyan">${STATE.goals.length}</div><div class="lbl">Metas activas</div></div>
+    </div>
+  </div>`;
+}
+
+function renderTienda(){
+  const t=STATE.shopTab||'todo';
+  const items=STATE.shopItems.filter(i=>t==='todo'||i.type===t);
+  return `<div class="px-4 fadein" style="padding-top:8px;">
+    <div class="section-h"><span>🛒 Tienda</span><span class="badge badge-gold">💰 ${userProfile?.coins||0}</span></div>
+    <div class="tabs">
+      <button class="tab-btn ${t==='todo'?'active':''}" onclick="STATE.shopTab='todo';render()">Todo</button>
+      <button class="tab-btn ${t==='Avatar'?'active':''}" onclick="STATE.shopTab='Avatar';render()">Avatares</button>
+      <button class="tab-btn ${t==='Marco'?'active':''}" onclick="STATE.shopTab='Marco';render()">Marcos</button>
+      <button class="tab-btn ${t==='Premium'?'active':''}" onclick="STATE.shopTab='Premium';render()">Premium</button>
+    </div>
+    <div class="grid2">${items.map(item=>`<div class="shop-item ${item.owned?'owned':''}" onclick="buyItem(${item.id})"><span style="font-size:36px;">${item.icon}</span><div style="font-size:13px;font-weight:700;">${item.title}</div><span class="badge badge-gray" style="font-size:10px;">${item.type}</span>${item.owned?`<span class="badge badge-green">✓ Tuyo</span>`:item.realPrice?`<div style="font-size:13px;font-weight:700;color:var(--gold);">${item.realPrice}</div>`:`<span class="badge badge-gold">💰 ${item.price}</span>`}</div>`).join('')}</div>
+  </div>`;
+}
+function buyItem(id){
+  const item=STATE.shopItems[id];if(!item)return;if(item.owned){showToast('Ya tienes este item','var(--muted)');return;}if(item.realPrice){showPremiumModal();return;}if((userProfile?.coins||0)<item.price){showToast('💰 Monedas insuficientes','var(--red)');return;}
+  openModal(`<h3 style="font-size:17px;font-weight:700;margin-bottom:12px;">🛒 Confirmar compra</h3><div style="text-align:center;padding:16px;background:var(--bg3);border-radius:var(--radius);margin-bottom:16px;"><div style="font-size:48px;margin-bottom:8px;">${item.icon}</div><div style="font-size:16px;font-weight:700;">${item.title}</div><span class="badge badge-gold" style="margin-top:6px;">💰 ${item.price}</span></div><button class="btn btn-primary btn-full mb-2" onclick="confBuy(${id})">Confirmar — 💰 ${item.price}</button><button class="btn btn-secondary btn-full" onclick="closeModalDirect()">Cancelar</button>`);
+}
+async function confBuy(id){
+  STATE.shopItems[id].owned=true;
+  if(userProfile){userProfile.coins-=STATE.shopItems[id].price;await sb.from('profiles').update({coins:userProfile.coins}).eq('id',currentUser.id);}
+  closeModalDirect();showToast(`✅ ¡${STATE.shopItems[id].title} adquirido!`,'var(--green)');render();
+}
+
+function renderEstadisticas(){
+  const u=userProfile||{};
+  const bars=[STATE.checkedMissions.size>0?100:0,80,65,90,75,0,0];
+  return `<div class="px-4 fadein" style="padding-top:8px;">
+    <div class="section-h"><span>📊 Estadísticas</span></div>
+    <div class="grid2 mb-3">
+      <div class="stat-mini"><div class="val color-purple">${(u.total_xp||0).toLocaleString()}</div><div class="lbl">XP Total</div></div>
+      <div class="stat-mini"><div class="val color-green">${u.missions_completed||0}</div><div class="lbl">Misiones totales</div></div>
+      <div class="stat-mini"><div class="val color-gold">🔥 ${u.streak||0}</div><div class="lbl">Racha actual</div></div>
+      <div class="stat-mini"><div class="val color-cyan">${STATE.goals.length}</div><div class="lbl">Metas activas</div></div>
+    </div>
+    <div class="card mb-3">
+      <div style="font-size:13px;font-weight:600;margin-bottom:12px;">Esta semana — Misiones</div>
+      <div style="display:flex;align-items:flex-end;gap:4px;height:80px;">${bars.map((v,i)=>`<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;"><div style="width:100%;height:${v}%;background:${v>=80?'linear-gradient(180deg,var(--green),#10b981)':v>=50?'linear-gradient(180deg,var(--purple),#7c3aed)':'var(--bg3)'};border-radius:4px 4px 0 0;min-height:4px;"></div><span style="font-size:9px;color:var(--muted);">${['L','M','X','J','V','S','D'][i]}</span></div>`).join('')}</div>
+    </div>
+    <div class="card card-glow-purple">
+      <div style="font-size:14px;font-weight:700;margin-bottom:10px;">Resumen de metas</div>
+      ${STATE.goals.length===0?`<p style="font-size:13px;color:var(--muted);">Crea metas para ver estadísticas 🎯</p>`:STATE.goals.map(g=>{const pct=Math.round((g.progress/g.target)*100);return`<div style="margin-bottom:8px;"><div class="flex justify-between mb-1"><span style="font-size:13px;">${g.icon} ${g.title}</span><span style="font-size:13px;font-weight:600;color:var(--purple);">${pct}%</span></div><div class="xpbar" style="height:5px;"><div class="xpbar-fill" style="width:${pct}%;"></div></div></div>`;}).join('')}
+    </div>
+  </div>`;
+}
+
+function renderAjustes(){
+  return `<div class="px-4 fadein" style="padding-top:8px;">
+    <div class="section-h"><span>⚙️ Ajustes</span></div>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:8px;font-weight:600;">CUENTA</p>
+    ${[{icon:'👤',label:'Editar perfil',action:"editPerfil()"},{icon:'📧',label:'Email: '+((userProfile?.email)||''),action:"showToast('📧 Cambia tu email desde Supabase','var(--cyan)')"},{icon:'🔑',label:'Cambiar contraseña',action:"sendPassReset()"}].map(item=>`<button onclick="${item.action}" style="width:100%;padding:13px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);display:flex;align-items:center;gap:12px;margin-bottom:8px;cursor:pointer;font-size:14px;text-align:left;"><span style="font-size:18px;">${item.icon}</span><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${item.label}</span><span style="color:var(--muted);flex-shrink:0;">→</span></button>`).join('')}
+    <p style="font-size:12px;color:var(--muted);margin-top:12px;margin-bottom:8px;font-weight:600;">SEGURIDAD</p>
+    ${[{icon:'🔒',label:'Política de privacidad',action:"showPrivacy()"},{icon:'📋',label:'Términos y condiciones',action:"showTerms()"},{icon:'🗑️',label:'Eliminar cuenta',action:"deleteAccountConfirm()",danger:true}].map(item=>`<button onclick="${item.action}" style="width:100%;padding:13px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);color:${item.danger?'var(--red)':'var(--text)'};display:flex;align-items:center;gap:12px;margin-bottom:8px;cursor:pointer;font-size:14px;text-align:left;"><span style="font-size:18px;">${item.icon}</span>${item.label}<span style="margin-left:auto;color:var(--muted);">→</span></button>`).join('')}
+    <button onclick="doLogout()" style="width:100%;padding:13px;background:transparent;border:1px solid rgba(239,68,68,.3);border-radius:var(--radius-sm);color:var(--red);display:flex;align-items:center;gap:12px;margin-bottom:20px;margin-top:4px;cursor:pointer;font-size:14px;">🚪 Cerrar sesión</button>
+    <p style="font-size:11px;color:var(--muted);text-align:center;">VIDA 2.0 v2.0.0 · Powered by Supabase + Claude AI</p>
+  </div>`;
+}
+async function sendPassReset(){
+  const {error}=await sb.auth.resetPasswordForEmail(userProfile?.email||currentUser?.email||'');
+  if(error)showToast('Error: '+error.message,'var(--red)');
+  else showToast('📧 Email de recuperación enviado','var(--cyan)');
+}
+
+// ===================== RENDER =====================
+function render(){
+  const container = document.getElementById('mainscreen');
+  if(!container) return;
+  const authScreens = ['loading','login','registro'];
+  const showNav = !authScreens.includes(currentScreen);
+  document.querySelector('.bnav').style.display = showNav?'flex':'none';
+  let html='';
+  switch(currentScreen){
+    case 'loading':   html=renderLoading();break;
+    case 'login':     html=renderLogin();break;
+    case 'registro':  html=renderRegistro();break;
+    case 'inicio':    html=renderInicio();break;
+    case 'misiones':  html=renderMisiones();break;
+    case 'metas':     html=renderMetas();break;
+    case 'aria':      html=renderARIA();break;
+    case 'perfil':    html=renderPerfil();break;
+    case 'logros':    html=renderLogros();break;
+    case 'amigos':    html=renderAmigos();break;
+    case 'futuro':    html=renderFuturo();break;
+    case 'calendario':html=renderCalendario();break;
+    case 'tienda':    html=renderTienda();break;
+    case 'estadisticas':html=renderEstadisticas();break;
+    case 'ajustes':   html=renderAjustes();break;
+    default:          html=renderInicio();
+  }
+  container.innerHTML = html;
+  if(currentScreen==='aria') scrollChat();
+}
+
+// ===================== INIT =====================
+setInterval(updateClock,1000);
+updateClock();
+render(); // show loading first
+initAuth();
+</script>
+</body>
+</html>
